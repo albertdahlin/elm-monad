@@ -15,5 +15,10 @@ fail =
 
 
 do : Result e a -> (a -> Result e b) -> Result e b
-do a next =
-    Result.andThen next a
+do ma next =
+    case ma of
+        Ok a ->
+            next a
+
+        Err e ->
+            Err e

@@ -25,17 +25,22 @@ get s =
 
 update : (a -> s -> s) -> State e s a -> State e s a
 update fn state s0 =
-    Result.map (\( a, s1 ) -> ( a, fn a s1 )) (state s0)
+    case state s0 of
+        Ok ( a, s1 ) ->
+            Ok ( a, fn a s1 )
+
+        Err e ->
+            Err e
 
 
 withState : (s -> a) -> State e s a
-withState fn s0 =
-    Ok ( fn s0, s0 )
+withState fn s =
+    Ok ( fn s, s )
 
 
 do : State e s a -> (a -> State e s b) -> State e s b
-do toA next s0 =
-    case toA s0 of
+do stateA next s0 =
+    case stateA s0 of
         Ok ( a, s1 ) ->
             next a s1
 
@@ -44,8 +49,8 @@ do toA next s0 =
 
 
 andThen : (a -> State e s b) -> State e s a -> State e s b
-andThen next toA s0 =
-    case toA s0 of
+andThen next stateA s0 =
+    case stateA s0 of
         Ok ( a, s1 ) ->
             next a s1
 
@@ -54,10 +59,10 @@ andThen next toA s0 =
 
 
 andMap : State e s a -> State e s (a -> b) -> State e s b
-andMap toA toFn s0 =
-    case toA s0 of
+andMap stateA stateFn s0 =
+    case stateA s0 of
         Ok ( a, s1 ) ->
-            case toFn s1 of
+            case stateFn s1 of
                 Ok ( fn, s2 ) ->
                     Ok ( fn a, s2 )
 
@@ -69,8 +74,8 @@ andMap toA toFn s0 =
 
 
 map : (a -> b) -> State e s a -> State e s b
-map mapFn stateFn s0 =
-    case stateFn s0 of
+map mapFn state s0 =
+    case state s0 of
         Ok ( a, s1 ) ->
             Ok ( mapFn a, s1 )
 
@@ -93,9 +98,9 @@ map3 fn a b c =
         |> andMap c
 
 
-mapErr : (e -> ee) -> State e s a -> State ee s a
-mapErr fn state s0 =
-    Result.mapError fn (state s0)
+mapError : (e -> ee) -> State e s a -> State ee s a
+mapError fn state s =
+    Result.mapError fn (state s)
 
 
 

@@ -11,10 +11,10 @@ return a =
 
 
 do : State s a -> (a -> State s b) -> State s b
-do toA next s0 =
+do stateA next s0 =
     let
         ( a, s1 ) =
-            toA s0
+            stateA s0
     in
     next a s1
 
@@ -34,36 +34,36 @@ update fn state s0 =
 
 
 withState : (s -> a) -> State s a
-withState fn s0 =
-    ( fn s0, s0 )
+withState fn s =
+    ( fn s, s )
 
 
 andThen : (a -> State s b) -> State s a -> State s b
-andThen next toA s0 =
+andThen next stateA s0 =
     let
         ( a, s1 ) =
-            toA s0
+            stateA s0
     in
     next a s1
 
 
 andMap : State s a -> State s (a -> b) -> State s b
-andMap toA toFn s0 =
+andMap stateA stateAB s0 =
     let
         ( a, s1 ) =
-            toA s0
+            stateA s0
 
         ( fn, s2 ) =
-            toFn s1
+            stateAB s1
     in
     ( fn a, s2 )
 
 
 map : (a -> b) -> State s a -> State s b
-map mapFn stateFn s0 =
+map mapFn stateA s0 =
     let
         ( a, s1 ) =
-            stateFn s0
+            stateA s0
     in
     ( mapFn a, s1 )
 
@@ -81,6 +81,11 @@ map3 mapFn a b c =
         |> andMap a
         |> andMap b
         |> andMap c
+
+
+combine : List (State s a) -> State s (List a)
+combine list s0 =
+    List.foldl identity s0 list
 
 
 run : s -> State s a -> ( a, s )
